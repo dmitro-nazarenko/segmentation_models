@@ -130,7 +130,7 @@ def build_unet(
         classes=1,
         activation='sigmoid',
         use_batchnorm=True,
-        attention=False,
+        attention,
 ):
     input_ = backbone.input
     x = backbone.output
@@ -153,6 +153,7 @@ def build_unet(
             skip = None
 
         x = decoder_block(decoder_filters[i], stage=i, use_batchnorm=use_batchnorm)(x, skip)
+
     if attention:
         pam = PAM()(x)
         pam = Conv2D(512, 3, padding='same', use_bias=False, kernel_initializer='he_normal')(pam)
@@ -205,6 +206,7 @@ def Unet(
         decoder_block_type='upsampling',
         decoder_filters=(256, 128, 64, 32, 16),
         decoder_use_batchnorm=True,
+        attention=False,
         **kwargs
 ):
     """ Unet_ is a fully convolution neural network for image semantic segmentation
@@ -272,6 +274,7 @@ def Unet(
         activation=activation,
         n_upsample_blocks=len(decoder_filters),
         use_batchnorm=decoder_use_batchnorm,
+        attention=attention,
     )
 
     # lock encoder weights for fine-tuning
