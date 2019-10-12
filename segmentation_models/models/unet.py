@@ -1,9 +1,13 @@
 from keras_applications import get_submodules_from_kwargs
+from keras.layers import Input, Activation, Conv2D, Dropout
+from keras.layers import MaxPooling2D, BatchNormalization
+from keras.layers import add
 
 from ._common_blocks import Conv2dBn
 from ._utils import freeze_model
 from ..backbones.backbones_factory import Backbones
 
+from .layers.attention import PAM, CAM
 backend = None
 layers = None
 models = None
@@ -26,6 +30,17 @@ def get_submodules():
 # ---------------------------------------------------------------------
 #  Blocks
 # ---------------------------------------------------------------------
+
+
+def Conv2d_BN(x, nb_filter, kernel_size, strides=(1, 1), padding='same', use_activation=True):
+    x = Conv2D(nb_filter, kernel_size, padding=padding, strides=strides, kernel_initializer='he_normal')(x)
+    x = BatchNormalization(axis=3)(x)
+    if use_activation:
+        x = Activation('relu')(x)
+        return x
+    else:
+        return x
+
 
 def Conv3x3BnReLU(filters, use_batchnorm, name=None):
     kwargs = get_submodules()
@@ -115,6 +130,7 @@ def build_unet(
         classes=1,
         activation='sigmoid',
         use_batchnorm=True,
+        attention=False,
 ):
     input_ = backbone.input
     x = backbone.output
@@ -137,6 +153,24 @@ def build_unet(
             skip = None
 
         x = decoder_block(decoder_filters[i], stage=i, use_batchnorm=use_batchnorm)(x, skip)
+    if attention:
+        pam = PAM()(x)
+        pam = Conv2D(512, 3, padding='same', use_bias=False, kernel_initializer='he_normal')(pam)
+        pam = BatchNormalization(axis=3)(pam)
+        pam = Activation('relu')(pam)
+        pam = Dropout(0.5)(pam)
+        pam = Conv2D(512, 3, padding='same', use_bias=False, kernel_initializer='he_normal')(pam)
+
+        cam = CAM()(x)
+        cam = Conv2D(512, 3, padding='same', use_bias=False, kernel_initializer='he_normal')(cam)
+        cam = BatchNormalization(axis=3)(cam)
+        cam = Activation('relu')(cam)
+        cam = Dropout(0.5)(cam)
+        cam = Conv2D(512, 3, padding='same', use_bias=False, kernel_initializer='he_normal')(cam)
+
+        x = add([pam, cam])
+        x = Dropout(0.5)(x)
+        x = Conv2d_BN(x, 512, 1)
 
     # model head (define number of output classes)
     x = layers.Conv2D(
