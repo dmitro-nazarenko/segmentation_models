@@ -123,6 +123,7 @@ def DecoderTransposeX2Block(filters, stage, use_batchnorm=False):
 
 def build_unet(
         backbone,
+        attention,
         decoder_block,
         skip_connection_layers,
         decoder_filters=(256, 128, 64, 32, 16),
@@ -130,7 +131,7 @@ def build_unet(
         classes=1,
         activation='sigmoid',
         use_batchnorm=True,
-        attention,
+        ,
 ):
     input_ = backbone.input
     x = backbone.output
