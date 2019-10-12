@@ -131,7 +131,6 @@ def build_unet(
         classes=1,
         activation='sigmoid',
         use_batchnorm=True,
-        ,
 ):
     input_ = backbone.input
     x = backbone.output
