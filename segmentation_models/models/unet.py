@@ -235,6 +235,8 @@ def Unet(
         decoder_use_batchnorm: if ``True``, ``BatchNormalisation`` layer between ``Conv2D`` and ``Activation`` layers
             is used.
 
+        attention: DANnet based self-attention
+
     Returns:
         ``keras.models.Model``: **Unet**
 
