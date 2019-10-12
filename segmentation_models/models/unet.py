@@ -269,6 +269,7 @@ def Unet(
 
     model = build_unet(
         backbone=backbone,
+        attention=attention,
         decoder_block=decoder_block,
         skip_connection_layers=encoder_features,
         decoder_filters=decoder_filters,
@@ -276,7 +277,7 @@ def Unet(
         activation=activation,
         n_upsample_blocks=len(decoder_filters),
         use_batchnorm=decoder_use_batchnorm,
-        attention=attention,
+
     )
 
     # lock encoder weights for fine-tuning
