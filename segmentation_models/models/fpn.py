@@ -142,6 +142,26 @@ def build_fpn(
 
 
     s5 = DoubleConv3x3BnReLU(segmentation_filters, use_batchnorm, name='segm_stage5')(p5)
+    if attention:
+        pam = PAM()(s5)
+        pam = Conv2D(segmentation_filters, 3, padding='same', use_bias=False, kernel_initializer='he_normal')(pam)
+        pam = BatchNormalization(axis=3)(pam)
+        pam = Activation('relu')(pam)
+        pam = Dropout(0.5)(pam)
+        pam = Conv2D(segmentation_filters, 3, padding='same', use_bias=False, kernel_initializer='he_normal')(pam)
+
+        cam = CAM()(s5)
+        cam = Conv2D(segmentation_filters, 3, padding='same', use_bias=False, kernel_initializer='he_normal')(cam)
+        cam = BatchNormalization(axis=3)(cam)
+        cam = Activation('relu')(cam)
+        cam = Dropout(0.5)(cam)
+        cam = Conv2D(segmentation_filters, 3, padding='same', use_bias=False, kernel_initializer='he_normal')(cam)
+
+        s5 = add([pam, cam])
+        s5 = Dropout(0.5)(s5)
+        s5 = Conv2d_BN(s5, segmentation_filters, 1)
+
+        
     s4 = DoubleConv3x3BnReLU(segmentation_filters, use_batchnorm, name='segm_stage4')(p4)
     s3 = DoubleConv3x3BnReLU(segmentation_filters, use_batchnorm, name='segm_stage3')(p3)
     s2 = DoubleConv3x3BnReLU(segmentation_filters, use_batchnorm, name='segm_stage2')(p2)
@@ -161,25 +181,7 @@ def build_fpn(
         raise ValueError('Aggregation parameter should be in ("sum", "concat"), '
                          'got {}'.format(aggregation))
 
-    if attention:
-        pam = PAM()(x)
-        pam = Conv2D(segmentation_filters, 3, padding='same', use_bias=False, kernel_initializer='he_normal')(pam)
-        pam = BatchNormalization(axis=3)(pam)
-        pam = Activation('relu')(pam)
-        pam = Dropout(0.5)(pam)
-        pam = Conv2D(segmentation_filters, 3, padding='same', use_bias=False, kernel_initializer='he_normal')(pam)
-
-        cam = CAM()(x)
-        cam = Conv2D(segmentation_filters, 3, padding='same', use_bias=False, kernel_initializer='he_normal')(cam)
-        cam = BatchNormalization(axis=3)(cam)
-        cam = Activation('relu')(cam)
-        cam = Dropout(0.5)(cam)
-        cam = Conv2D(segmentation_filters, 3, padding='same', use_bias=False, kernel_initializer='he_normal')(cam)
-
-        x = add([pam, cam])
-        x = Dropout(0.5)(x)
-        x = Conv2d_BN(x, segmentation_filters, 1)
-
+    
     if dropout:
         x = layers.SpatialDropout2D(dropout, name='pyramid_dropout')(x)
 
