@@ -153,25 +153,25 @@ def build_unet(
             skip = None
 
         x = decoder_block(decoder_filters[i], stage=i, use_batchnorm=use_batchnorm)(x, skip)
+        if i == 1:
+            if attention:
+                pam = PAM()(x)
+                pam = Conv2D(decoder_filters[i], 3, padding='same', use_bias=False, kernel_initializer='he_normal')(pam)
+                pam = BatchNormalization(axis=3)(pam)
+                pam = Activation('relu')(pam)
+                pam = Dropout(0.5)(pam)
+                pam = Conv2D(decoder_filters[i], 3, padding='same', use_bias=False, kernel_initializer='he_normal')(pam)
 
-    if attention:
-        pam = PAM()(x)
-        pam = Conv2D(decoder_filters[-1], 3, padding='same', use_bias=False, kernel_initializer='he_normal')(pam)
-        pam = BatchNormalization(axis=3)(pam)
-        pam = Activation('relu')(pam)
-        pam = Dropout(0.5)(pam)
-        pam = Conv2D(decoder_filters[-1], 3, padding='same', use_bias=False, kernel_initializer='he_normal')(pam)
+                cam = CAM()(x)
+                cam = Conv2D(decoder_filters[i], 3, padding='same', use_bias=False, kernel_initializer='he_normal')(cam)
+                cam = BatchNormalization(axis=3)(cam)
+                cam = Activation('relu')(cam)
+                cam = Dropout(0.5)(cam)
+                cam = Conv2D(decoder_filters[i], 3, padding='same', use_bias=False, kernel_initializer='he_normal')(cam)
 
-        cam = CAM()(x)
-        cam = Conv2D(decoder_filters[-1], 3, padding='same', use_bias=False, kernel_initializer='he_normal')(cam)
-        cam = BatchNormalization(axis=3)(cam)
-        cam = Activation('relu')(cam)
-        cam = Dropout(0.5)(cam)
-        cam = Conv2D(decoder_filters[-1], 3, padding='same', use_bias=False, kernel_initializer='he_normal')(cam)
-
-        x = add([pam, cam])
-        x = Dropout(0.5)(x)
-        x = Conv2d_BN(x, decoder_filters[-1], 1)
+                x = add([pam, cam])
+                x = Dropout(0.5)(x)
+                x = Conv2d_BN(x, decoder_filters[i], 1)
 
     # model head (define number of output classes)
     x = layers.Conv2D(
