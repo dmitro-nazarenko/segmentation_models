@@ -161,7 +161,7 @@ def build_unet(
                 pam = Activation('relu')(pam)
                 pam = Dropout(0.5)(pam)
                 pam = Conv2D(decoder_filters[i], 3, padding='same', use_bias=False, kernel_initializer='he_normal')(pam)
-
+                print(pam.shape)
                 cam = CAM()(x)
                 cam = Conv2D(decoder_filters[i], 3, padding='same', use_bias=False, kernel_initializer='he_normal')(cam)
                 cam = BatchNormalization(axis=3)(cam)
