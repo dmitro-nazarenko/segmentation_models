@@ -153,7 +153,7 @@ def build_unet(
             skip = None
 
         x = decoder_block(decoder_filters[i], stage=i, use_batchnorm=use_batchnorm)(x, skip)
-        if i < 2 and attention:
+        if i == 1 and attention:
             pam = PAM()(x)
             pam = Conv2D(decoder_filters[i], 3, padding='same', use_bias=False, kernel_initializer='he_normal')(pam)
             pam = BatchNormalization(axis=3)(pam)
